@@ -15,8 +15,8 @@ Você precisará informar a rede qual irá scannear da seguinte forma:
 ```
 
 Depois que eu escrevi esse source eu encontrei outros links de ferramentas com o propósito para ownar impressoras de rede, segue abaixo:
-	- https://github.com/RUB-NDS/PRET
+ - https://github.com/RUB-NDS/PRET
 
-#### Depêndencias:
+#### Dependências:
  - Nmap
  - figlet
